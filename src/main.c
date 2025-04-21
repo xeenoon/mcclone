@@ -4,126 +4,205 @@
 #include <stdio.h>
 #include "shader.h"
 
-// Vertex Shader source
-const char *vertexShaderSource = "#version 330 core\n"
-                                 "layout (location = 0) in vec3 aPos;\n"
-                                 "void main() {\n"
-                                 "   gl_Position = vec4(aPos, 1.0);\n"
-                                 "}\0";
+float cameraSpeed = 2.5f;
+vec3 cameraPos = {0.0f, 0.0f, 3.0f};
+vec3 cameraFront = {0.0f, 0.0f, -1.0f};
+vec3 cameraUp = {0.0f, 1.0f, 0.0f};
 
-// Fragment Shader source
-const char *fragmentShaderSource = "#version 330 core\n"
-                                   "out vec4 FragColor;\n"
-                                   "void main() {\n"
-                                   "   FragColor = vec4(1.0, 0.5, 0.2, 1.0);\n"
-                                   "}\0";
+float yaw = -90.0f;
+float pitch = 0.0f;
+float lastX = 400, lastY = 300;
+int firstMouse = 1;
 
-void framebuffer_size_callback(GLFWwindow *window, int width, int height)
-{
+void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
 }
 
-int main()
-{
-    // Initialize GLFW
-    if (!glfwInit())
-    {
-        fprintf(stderr, "Failed to initialize GLFW\n");
-        return -1;
+void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
+    if (firstMouse) {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = 0;
     }
 
-    // OpenGL 3.3 Core Profile
+    float sensitivity = 0.05f;
+    float xoffset = (xpos - lastX) * sensitivity;
+    float yoffset = (lastY - ypos) * sensitivity;
+    lastX = xpos;
+    lastY = ypos;
+
+    yaw += xoffset;
+    pitch += yoffset;
+
+    if (pitch > 89.0f) pitch = 89.0f;
+    if (pitch < -89.0f) pitch = -89.0f;
+
+    vec3 front;
+    front[0] = cosf(glm_rad(yaw)) * cosf(glm_rad(pitch));
+    front[1] = sinf(glm_rad(pitch));
+    front[2] = sinf(glm_rad(yaw)) * cosf(glm_rad(pitch));
+    glm_normalize_to(front, cameraFront);
+}
+
+void process_input(GLFWwindow* window, float deltaTime) {
+    float velocity = cameraSpeed * deltaTime;
+
+    vec3 right;
+    glm_cross(cameraFront, cameraUp, right);
+    glm_normalize(right);
+
+    vec3 tmp;
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+        glm_vec3_scale(cameraFront, velocity, tmp);
+        glm_vec3_add(cameraPos, tmp, cameraPos);
+    }
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+        glm_vec3_scale(cameraFront, velocity, tmp);
+        glm_vec3_sub(cameraPos, tmp, cameraPos);
+    }
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+        glm_vec3_scale(right, velocity, tmp);
+        glm_vec3_sub(cameraPos, tmp, cameraPos);
+    }
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+        glm_vec3_scale(right, velocity, tmp);
+        glm_vec3_add(cameraPos, tmp, cameraPos);
+    }
+}
+
+GLFWwindow* setupwindow() {
+    if (!glfwInit()) return NULL;
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    // Create a window
-    GLFWwindow *window = glfwCreateWindow(800, 600, "OpenGL Triangle", NULL, NULL);
-    if (!window)
-    {
-        fprintf(stderr, "Failed to create GLFW window\n");
+    GLFWwindow* window = glfwCreateWindow(800, 600, "OpenGL Cube", NULL, NULL);
+    if (!window) {
         glfwTerminate();
-        return -1;
+        return NULL;
     }
     glfwMakeContextCurrent(window);
-
-    // Load OpenGL functions via GLAD
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        fprintf(stderr, "Failed to initialize GLAD\n");
-        return -1;
-    }
-
-    // Set the viewport and callback
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) return NULL;
     glViewport(0, 0, 800, 600);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    return window;
+}
 
-    // Define triangle vertices
+int main() {
+    GLFWwindow* window = setupwindow();
+    if (!window) return -1;
+
     float vertices[] = {
-        0.0f, 0.5f, 0.0f,
-        -0.5f, -0.5f, 0.0f,
-        0.5f, -0.5f, 0.0f};
-
-    // Vertex Array and Buffer
+        // positions          // normals
+        -0.5f, -0.5f, -0.5f,   0.0f,  0.0f, -1.0f,
+         0.5f, -0.5f, -0.5f,   0.0f,  0.0f, -1.0f,
+         0.5f,  0.5f, -0.5f,   0.0f,  0.0f, -1.0f,
+         0.5f,  0.5f, -0.5f,   0.0f,  0.0f, -1.0f,
+        -0.5f,  0.5f, -0.5f,   0.0f,  0.0f, -1.0f,
+        -0.5f, -0.5f, -0.5f,   0.0f,  0.0f, -1.0f,
+    
+        -0.5f, -0.5f,  0.5f,   0.0f,  0.0f, 1.0f,
+         0.5f, -0.5f,  0.5f,   0.0f,  0.0f, 1.0f,
+         0.5f,  0.5f,  0.5f,   0.0f,  0.0f, 1.0f,
+         0.5f,  0.5f,  0.5f,   0.0f,  0.0f, 1.0f,
+        -0.5f,  0.5f,  0.5f,   0.0f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,   0.0f,  0.0f, 1.0f,
+    
+        -0.5f,  0.5f,  0.5f,  -1.0f,  0.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,  -1.0f,  0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,  -1.0f,  0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,  -1.0f,  0.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f,  -1.0f,  0.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  -1.0f,  0.0f, 0.0f,
+    
+         0.5f,  0.5f,  0.5f,   1.0f,  0.0f, 0.0f,
+         0.5f,  0.5f, -0.5f,   1.0f,  0.0f, 0.0f,
+         0.5f, -0.5f, -0.5f,   1.0f,  0.0f, 0.0f,
+         0.5f, -0.5f, -0.5f,   1.0f,  0.0f, 0.0f,
+         0.5f, -0.5f,  0.5f,   1.0f,  0.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,   1.0f,  0.0f, 0.0f,
+    
+        -0.5f, -0.5f, -0.5f,   0.0f, -1.0f, 0.0f,
+         0.5f, -0.5f, -0.5f,   0.0f, -1.0f, 0.0f,
+         0.5f, -0.5f,  0.5f,   0.0f, -1.0f, 0.0f,
+         0.5f, -0.5f,  0.5f,   0.0f, -1.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f,   0.0f, -1.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,   0.0f, -1.0f, 0.0f,
+    
+        -0.5f,  0.5f, -0.5f,   0.0f, 1.0f, 0.0f,
+         0.5f,  0.5f, -0.5f,   0.0f, 1.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,   0.0f, 1.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,   0.0f, 1.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,   0.0f, 1.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,   0.0f, 1.0f, 0.0f
+    };
+    
     unsigned int VAO, VBO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
-
-    // Bind VAO
     glBindVertexArray(VAO);
-
-    // Bind and fill VBO
+    
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    // Vertex attribute pointer
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+    
+    // position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+    
+    // normal attribute
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    
 
-    // Unbind buffers
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-
-    // Compile vertex shader
     Shader *vertshader = init_shader(GL_VERTEX_SHADER, "assets/default_vert.vert");
     compile_shader(vertshader);
-
     Shader *fragshader = init_shader(GL_FRAGMENT_SHADER, "assets/default_frag.frag");
     compile_shader(fragshader);
-
-
-    // Link shaders to program
     unsigned int shaderProgram = glCreateProgram();
     glAttachShader(shaderProgram, vertshader->shaderptr);
     glAttachShader(shaderProgram, fragshader->shaderptr);
     glLinkProgram(shaderProgram);
-
-    // Clean up shaders
     free_shader(vertshader);
     free_shader(fragshader);
 
-    // Main render loop
-    while (!glfwWindowShouldClose(window))
-    {
-        // Clear the screen
+    mat4 projection;
+    glm_perspective(glm_rad(45.0f), 800.0f / 600.0f, 0.1f, 100.0f, projection);
+
+    glEnable(GL_DEPTH_TEST);
+
+    float lastFrame = 0.0f;
+    while (!glfwWindowShouldClose(window)) {
+        float currentFrame = glfwGetTime();
+        float deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+
+        process_input(window, deltaTime);
+
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Draw triangle
+        mat4 view;
+        vec3 center;
+        glm_vec3_add(cameraPos, cameraFront, center);
+        glm_lookat(cameraPos, center, cameraUp, view);
+
         glUseProgram(shaderProgram);
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        int viewLoc = glGetUniformLocation(shaderProgram, "view");
+        int projLoc = glGetUniformLocation(shaderProgram, "projection");
+        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, (float *)view);
+        glUniformMatrix4fv(projLoc, 1, GL_FALSE, (float *)projection);
 
-        // Events and buffer swap
+        glBindVertexArray(VAO);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    // Cleanup
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
     glDeleteProgram(shaderProgram);
-
     glfwTerminate();
     return 0;
 }

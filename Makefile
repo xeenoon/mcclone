@@ -15,7 +15,7 @@ CXXFLAGS = -I$(INCLUDE_DIR)
 CXXFLAGS += -g
 
 # Libraries
-LIBS = -lglfw -ldl -lGL
+LIBS = -lglfw -ldl -lGL -lm
 
 # Default target
 all: $(OUTFILE)
