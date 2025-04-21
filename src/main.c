@@ -3,6 +3,7 @@
 #include <cglm/cglm.h>
 #include <stdio.h>
 #include "shader.h"
+#include "mesh.h"
 
 float cameraSpeed = 2.5f;
 vec3 cameraPos = {0.0f, 0.0f, 3.0f};
@@ -90,53 +91,34 @@ GLFWwindow* setupwindow() {
 }
 
 int main() {
+
+    //FOR TESTING!!!
+    float cubeVerts[] = {
+        -0.5f, -0.5f, -0.5f, // 0 bottom back left
+         0.5f, -0.5f, -0.5f, // 1 bottom back right
+         0.5f,  0.5f, -0.5f, // 2 top back right
+        -0.5f,  0.5f, -0.5f, // 3 top back left
+        -0.5f, -0.5f,  0.5f, // 4 front bottom left
+         0.5f, -0.5f,  0.5f, // 5 front bottom right
+         0.5f,  0.5f,  0.5f, // 6 front top right
+        -0.5f,  0.5f,  0.5f  // 7 front top left
+    };
+    
+    unsigned int indices[] = {
+        0,1,2, 2,3,0, // back
+        4,5,6, 6,7,4, // front
+        0,4,7, 7,3,0, // left
+        1,5,6, 6,2,1, // right
+        0,1,5, 5,4,0, // bottom
+        3,2,6, 6,7,3  // top
+    };
+    MeshBuilder *builder = init_builder(cubeVerts, indices, 8, 36);
+    Mesh *with_normals = generate_mesh(builder);
+    
+
+
     GLFWwindow* window = setupwindow();
     if (!window) return -1;
-
-    float vertices[] = {
-        // positions          // normals
-        -0.5f, -0.5f, -0.5f,   0.0f,  0.0f, -1.0f,
-         0.5f, -0.5f, -0.5f,   0.0f,  0.0f, -1.0f,
-         0.5f,  0.5f, -0.5f,   0.0f,  0.0f, -1.0f,
-         0.5f,  0.5f, -0.5f,   0.0f,  0.0f, -1.0f,
-        -0.5f,  0.5f, -0.5f,   0.0f,  0.0f, -1.0f,
-        -0.5f, -0.5f, -0.5f,   0.0f,  0.0f, -1.0f,
-    
-        -0.5f, -0.5f,  0.5f,   0.0f,  0.0f, 1.0f,
-         0.5f, -0.5f,  0.5f,   0.0f,  0.0f, 1.0f,
-         0.5f,  0.5f,  0.5f,   0.0f,  0.0f, 1.0f,
-         0.5f,  0.5f,  0.5f,   0.0f,  0.0f, 1.0f,
-        -0.5f,  0.5f,  0.5f,   0.0f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,   0.0f,  0.0f, 1.0f,
-    
-        -0.5f,  0.5f,  0.5f,  -1.0f,  0.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  -1.0f,  0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f,  -1.0f,  0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f,  -1.0f,  0.0f, 0.0f,
-        -0.5f, -0.5f,  0.5f,  -1.0f,  0.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  -1.0f,  0.0f, 0.0f,
-    
-         0.5f,  0.5f,  0.5f,   1.0f,  0.0f, 0.0f,
-         0.5f,  0.5f, -0.5f,   1.0f,  0.0f, 0.0f,
-         0.5f, -0.5f, -0.5f,   1.0f,  0.0f, 0.0f,
-         0.5f, -0.5f, -0.5f,   1.0f,  0.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,   1.0f,  0.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,   1.0f,  0.0f, 0.0f,
-    
-        -0.5f, -0.5f, -0.5f,   0.0f, -1.0f, 0.0f,
-         0.5f, -0.5f, -0.5f,   0.0f, -1.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,   0.0f, -1.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,   0.0f, -1.0f, 0.0f,
-        -0.5f, -0.5f,  0.5f,   0.0f, -1.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f,   0.0f, -1.0f, 0.0f,
-    
-        -0.5f,  0.5f, -0.5f,   0.0f, 1.0f, 0.0f,
-         0.5f,  0.5f, -0.5f,   0.0f, 1.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,   0.0f, 1.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,   0.0f, 1.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,   0.0f, 1.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,   0.0f, 1.0f, 0.0f
-    };
     
     unsigned int VAO, VBO;
     glGenVertexArrays(1, &VAO);
@@ -144,7 +126,7 @@ int main() {
     glBindVertexArray(VAO);
     
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, with_normals->vertex_count * 6 * sizeof(float), with_normals->vertices, GL_STATIC_DRAW);
     
     // position attribute
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
