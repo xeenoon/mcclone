@@ -1,11 +1,11 @@
 # Compiler
-CXX = g++
+CXX = gcc
 
 # Source files (all .cpp and .c files in src directory)
 SRC = $(wildcard src/*.c) # Compile all .c files
 
-# Include directory (replace with absolute path)
-INCLUDE_DIR = $(HOME)/Downloads/tutorial/include
+# Include directory (relative to the Makefile location)
+INCLUDE_DIR = $(CURDIR)/include
 
 # Output executable
 OUTFILE = outfile
