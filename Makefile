@@ -1,8 +1,8 @@
 # Compiler
 CXX = gcc
 
-# Source files (all .cpp and .c files in src directory)
-SRC = $(wildcard src/*.c) # Compile all .c files
+# Source files (all .c files in src directory)
+SRC = $(wildcard src/*.c)
 
 # Include directory (relative to the Makefile location)
 INCLUDE_DIR = $(CURDIR)/include
@@ -14,7 +14,8 @@ OUTFILE = outfile
 CXXFLAGS = -I$(INCLUDE_DIR)
 CXXFLAGS += -g
 
-# Libraries
+# Static/dynamic linking flags
+# Attempt to statically link GLFW and math, dynamically link rest
 LIBS = -lglfw -ldl -lGL -lm
 
 # Default target

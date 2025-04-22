@@ -1,4 +1,5 @@
 #include "mesh.h"
+#include "glad/glad.h"
 #include <stdlib.h>
 #include <string.h>
 #include <cglm/cglm.h> // Assume you're using cglm for math functions
@@ -205,4 +206,24 @@ void print_mesh(Mesh *mesh)
                mesh->indices[i + 1],
                mesh->indices[i + 2]);
     }
+}
+void generate_gpu_objects(Mesh *mesh)
+{
+    unsigned int VAO, VBO;
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    glBindVertexArray(VAO);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, mesh->vertex_count * 6 * sizeof(float), mesh->vertices, GL_STATIC_DRAW);
+    
+    // position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), NULL);
+    glEnableVertexAttribArray(0);
+    
+    // normal attribute
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    mesh->VAO = VAO;
+    mesh->VBO = VBO;
 }
