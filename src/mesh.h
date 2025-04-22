@@ -7,18 +7,20 @@ typedef struct Mesh
     int *indices;
     int vertex_count;
     int indice_count;
-    unsigned int VAO, VBO;
+    bool has_texture;
+    unsigned int VAO, VBO, TBO, EBO;
 }Mesh;
 
 typedef struct MeshBuilder
 {
     float *vertices;
+    float *tex_coords;
     int *indices;
     int vertex_count;
     int indice_count;
 }MeshBuilder;
 
-MeshBuilder *init_builder(float *vertices, int *indices, int vertex_count, int indice_count);
+MeshBuilder *init_builder(float *vertices, int *indices, int vertex_count, int indice_count, float* tex_coords);
 Mesh *generate_mesh(MeshBuilder *builder);
 void generate_gpu_objects(Mesh *mesh);
 

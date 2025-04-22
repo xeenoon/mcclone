@@ -5,7 +5,7 @@
 #include "shader.h"
 #include "mesh.h"
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include "stb/stb_image.h"
 
 float cameraSpeed = 2.5f;
 vec3 cameraPos = {0.0f, 0.0f, 3.0f};
@@ -125,6 +125,17 @@ int main()
         -0.5f, 0.5f, 0.5f    // 7 front top left
     };
 
+    float texcoords[] = {
+        0.0f, 0.0f, // 0: bottom back left
+        1.0f, 0.0f, // 1: bottom back right
+        1.0f, 1.0f, // 2: top back right
+        0.0f, 1.0f, // 3: top back left
+        0.0f, 0.0f, // 4: front bottom left
+        1.0f, 0.0f, // 5: front bottom right
+        1.0f, 1.0f, // 6: front top right
+        0.0f, 1.0f  // 7: front top left
+    };
+
     unsigned int indices[] = {
         0, 1, 2, 2, 3, 0, // back
         4, 5, 6, 6, 7, 4, // front
@@ -134,9 +145,37 @@ int main()
         3, 2, 6, 6, 7, 3  // top
     };
 
-    MeshBuilder *builder = init_builder(cubeVerts, indices, 8, 36);
+    MeshBuilder *builder = init_builder(cubeVerts, indices, 8, 36, texcoords);
     Mesh *with_normals = generate_mesh(builder);
     generate_gpu_objects(with_normals);
+    print_mesh(with_normals);
+
+    unsigned int texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    // Texture parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // Load image
+    int width, height, nrChannels;
+    unsigned char *data = stbi_load("assets/dirt.jpg", &width, &height, &nrChannels, 0);
+    if (data)
+    {
+        GLenum format = GL_RGB;
+        if (nrChannels == 4)
+            format = GL_RGBA;
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    
+    else
+    {
+        printf("Failed to load texture\n");
+    }
+    stbi_image_free(data);
 
     Shader *vertshader = init_shader(GL_VERTEX_SHADER, "assets/default_vert.vert");
     compile_shader(vertshader);
@@ -177,8 +216,20 @@ int main()
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, (float *)view);
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, (float *)projection);
 
+        mat4 model;
+glm_mat4_identity(model);
+// Optionally rotate/translate it here
+int modelLoc = glGetUniformLocation(shaderProgram, "model");
+glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (float *)model);
+
+
         glBindVertexArray(with_normals->VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        glActiveTexture(GL_TEXTURE0); // Activate texture unit 0
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glUniform1i(glGetUniformLocation(shaderProgram, "texture1"), 0);
+
+        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
