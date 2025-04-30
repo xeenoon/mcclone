@@ -3,9 +3,10 @@
 #include <cglm/cglm.h>
 #include <stdio.h>
 #include "shader.h"
-#include "mesh.h"
+// #include "mesh.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
+#include "terrain.h"
 
 float cameraSpeed = 2.5f;
 vec3 cameraPos = {0.0f, 0.0f, 3.0f};
@@ -144,11 +145,14 @@ int main()
         0, 1, 5, 5, 4, 0, // bottom
         3, 2, 6, 6, 7, 3  // top
     };
-
-    MeshBuilder *builder = init_builder(cubeVerts, indices, 8, 36, texcoords);
-    Mesh *with_normals = generate_mesh(builder);
-    generate_gpu_objects(with_normals);
-    print_mesh(with_normals);
+    /*
+        MeshBuilder *builder = init_builder(cubeVerts, indices, 8, 36, texcoords);
+        Mesh *with_normals = generate_mesh(builder);
+        generate_gpu_objects(with_normals);
+        print_mesh(with_normals);
+    */
+    Terrain *terrain = init_terrain(0, 0, 0, 1, 1, 2, 2);
+    generate_terrain_gpu_objects(terrain);
 
     unsigned int texture;
     glGenTextures(1, &texture);
@@ -170,7 +174,7 @@ int main()
         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
     }
-    
+
     else
     {
         printf("Failed to load texture\n");
@@ -217,17 +221,16 @@ int main()
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, (float *)projection);
 
         mat4 model;
-glm_mat4_identity(model);
-// Optionally rotate/translate it here
-int modelLoc = glGetUniformLocation(shaderProgram, "model");
-glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (float *)model);
+        glm_mat4_identity(model);
+        // Optionally rotate/translate it here
+        int modelLoc = glGetUniformLocation(shaderProgram, "model");
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (float *)model);
 
+        glBindVertexArray(terrain->VAO);
 
-        glBindVertexArray(with_normals->VAO);
-
-        glActiveTexture(GL_TEXTURE0); // Activate texture unit 0
-        glBindTexture(GL_TEXTURE_2D, texture);
-        glUniform1i(glGetUniformLocation(shaderProgram, "texture1"), 0);
+        //glActiveTexture(GL_TEXTURE0); // Activate texture unit 0
+        //glBindTexture(GL_TEXTURE_2D, texture);
+        //glUniform1i(glGetUniformLocation(shaderProgram, "texture1"), 0);
 
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
@@ -235,8 +238,8 @@ glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (float *)model);
         glfwPollEvents();
     }
 
-    glDeleteVertexArrays(1, &with_normals->VAO);
-    glDeleteBuffers(1, &with_normals->VBO);
+    glDeleteVertexArrays(1, &terrain->VAO);
+    glDeleteBuffers(1, &terrain->VBO);
     glDeleteProgram(shaderProgram);
     glfwTerminate();
     return 0;
