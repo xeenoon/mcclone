@@ -7,6 +7,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
 #include "terrain.h"
+#include "block.h"
 
 float cameraSpeed = 2.5f;
 vec3 cameraPos = {0.0f, 0.0f, 3.0f};
@@ -151,8 +152,12 @@ int main()
         generate_gpu_objects(with_normals);
         print_mesh(with_normals);
     */
-    Terrain *terrain = init_terrain(0, 0, 0, 1, 1, 2, 2);
-    generate_terrain_gpu_objects(terrain);
+    /*Terrain *terrain = init_terrain(0, 0, 0, 1, 1, 2, 2);
+    generate_terrain_gpu_objects(terrain);*/
+
+    setup_block_data();
+    BlockInstance *block = init_block(0, 0, 0, Dirt);
+    BlockTypeData b_data = block_data[block->type];
 
     unsigned int texture;
     glGenTextures(1, &texture);
@@ -226,11 +231,11 @@ int main()
         int modelLoc = glGetUniformLocation(shaderProgram, "model");
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (float *)model);
 
-        glBindVertexArray(terrain->VAO);
+        glBindVertexArray(b_data.VAO);
 
-        //glActiveTexture(GL_TEXTURE0); // Activate texture unit 0
-        //glBindTexture(GL_TEXTURE_2D, texture);
-        //glUniform1i(glGetUniformLocation(shaderProgram, "texture1"), 0);
+        glActiveTexture(GL_TEXTURE0); // Activate texture unit 0
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glUniform1i(glGetUniformLocation(shaderProgram, "texture1"), 0);
 
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
@@ -238,8 +243,8 @@ int main()
         glfwPollEvents();
     }
 
-    glDeleteVertexArrays(1, &terrain->VAO);
-    glDeleteBuffers(1, &terrain->VBO);
+    glDeleteVertexArrays(1, &b_data.VAO);
+    glDeleteBuffers(1, &b_data.VBO);
     glDeleteProgram(shaderProgram);
     glfwTerminate();
     return 0;

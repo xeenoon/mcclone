@@ -20,12 +20,14 @@ typedef struct {
     char *texture_path;
 } BlockTypeData;
 
-extern BlockTypeData block_data[BLOCK_COUNT];
-void setup_block_data();
-
 typedef struct {
     int x, y, z;
     BlockType type;
 } BlockInstance;
+
+extern BlockTypeData block_data[BLOCK_COUNT];
+void setup_block_data();
+BlockInstance *init_block(int x, int y, int z, BlockType type); 
+
 
 #endif
