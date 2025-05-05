@@ -15,8 +15,16 @@ CXXFLAGS = -I$(INCLUDE_DIR)
 CXXFLAGS += -g
 
 # Static/dynamic linking flags
-# Attempt to statically link GLFW and math, dynamically link rest
-LIBS = -lglfw -ldl -lGL -lm
+LIBS = 
+
+# Check OS and set flags accordingly
+ifeq ($(OS),Windows_NT)
+    # Windows-specific flags
+    LIBS += -lglfw3 -lgdi32 -lopengl32 -lm
+else
+    # Linux-specific flags
+    LIBS += -lglfw -ldl -lGL -lm
+endif
 
 # Default target
 all: $(OUTFILE)
